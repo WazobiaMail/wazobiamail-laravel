@@ -3,8 +3,11 @@
 [![Latest Version](https://img.shields.io/packagist/v/wazobiamail/wazobiamail-laravel.svg?style=flat-square)](https://packagist.org/packages/wazobiamail/wazobiamail-laravel)
 [![Total Downloads](https://img.shields.io/packagist/dt/wazobiamail/wazobiamail-laravel.svg?style=flat-square)](https://packagist.org/packages/wazobiamail/wazobiamail-laravel)
 [![License](https://img.shields.io/packagist/l/wazobiamail/wazobiamail-laravel.svg?style=flat-square)](LICENSE)
+[![Docs](https://img.shields.io/badge/Docs-docs.wazobiamail.com-blueviolet.svg?style=flat-square)](https://docs.wazobiamail.com)
 
 Official Laravel integration package for [WazobiaMail](https://wazobiamail.com). Provides seamless integration with Laravel's native `Mail` manager, custom `wazobiamail` mail driver, an expressive `WazobiaMail` Facade, and full support for Enterprise features (Mailbox Inboxes, Domain DNS auto-sync, Webhooks).
+
+> 📚 **Official Platform Documentation**: Visit [docs.wazobiamail.com](https://docs.wazobiamail.com) for exhaustive API references, architecture guides, DNS setup walkthroughs, and webhook configurations.
 
 ---
 
@@ -166,16 +169,67 @@ $dns = WazobiaMail::domains()->getDnsRecords('dom_12345');
 $status = WazobiaMail::domains()->verify('dom_12345');
 ```
 
-#### Delivery Tracking & Analytics
+##### 🌐 Subdomain vs. Apex / Root Domain Architecture & Edge Cases
+
+When configuring custom domains for transactional sending, choosing between a **subdomain** (e.g. `mail.example.com` or `notifications.example.com`) and an **apex/root domain** (`example.com`) is a critical architectural decision.
+
+- **Preserve Existing Business Email (Google Workspace / Microsoft 365):**
+  If your root domain (`example.com`) already receives corporate email via Google Workspace or Microsoft 365, adding MX records pointing to WazobiaMail at the root apex `@` will **break your existing company email inbox routing**. Using `mail.example.com` isolates transactional email routing completely.
+- **Isolate Sender Reputation:**
+  Transactional emails (password resets, invoices, OTP codes) have high engagement and deliverability requirements. Sending from a subdomain (`mail.example.com`) ensures that any accidental marketing spam complaints won't degrade your corporate employee email deliverability.
+- **Avoid SPF 10-Lookup Limit Exhaustion (RFC 7208):**
+  SPF records have a strict limit of 10 DNS lookups. Root domains often accumulate multiple SaaS providers (Google, Zendesk, Salesforce, HubSpot). A dedicated subdomain gives WazobiaMail its own clean, independent SPF record without lookup count contention.
+
+###### DNS Hostnames When Root Domain is NOT Used
+
+When verifying a subdomain like `notifications.example.com`, ensure you configure your DNS provider (Cloudflare, Route53, Namecheap, GoDaddy) with the correct hostnames:
+
+| Record Type | Host / Name (if domain is `notifications.example.com`) | Target / Value | Notes |
+| :--- | :--- | :--- | :--- |
+| **TXT (SPF)** | `notifications` | `v=spf1 include:_spf.wazobiamail.com ~all` | **Do NOT** place on `@` root |
+| **TXT (DKIM)** | `wzbm._domainkey.notifications` | `k=rsa; p=MIGfMA0GCSqGSIb3...` | Selector is scoped to the subdomain |
+| **MX (Hosted)**| `notifications` (priority 10 / 20) | `mx1.wazobiamail.com` / `mx2.wazobiamail.com` | Only required if receiving mail or hosted inboxes |
+| **CNAME (Tracking)** | `email.notifications` | `trk.wazobiamail.com` | Used for custom branded click/open tracking |
+| **TXT (DMARC)** | `_dmarc.notifications` (or fallback to `_dmarc`) | `v=DMARC1; p=reject; rua=mailto:dmarc@...` | Resolvers fall back to apex `_dmarc` if omitted |
+
+###### Critical Edge Cases & Troubleshooting
+
+- **⚠️ UnverifiedSenderDomain (HTTP 422 / 403)**: If you verified `notifications.example.com` in WazobiaMail, your `from` address in your Mailable **must** match that subdomain (e.g. `notifications@notifications.example.com`). Attempting to send from an unverified root domain will throw a `ValidationException`.
+- **💡 Reply-To Decoupling (Best Practice)**: You can send from the verified subdomain while routing customer replies to your corporate root domain mailbox:
+  ```php
+  Mail::to($user->email)->send(
+      (new OrderShipped($order))
+          ->from('orders@notifications.example.com', 'Store Orders')
+          ->replyTo('support@example.com', 'Customer Support')
+  );
+  ```
+- **☁️ Cloudflare Proxy Status (Grey Cloud vs. Orange Cloud)**: In Cloudflare DNS, leaving the proxy enabled (**Orange Cloud**) for mail or tracking records breaks SMTP traffic and DNS verification. Always toggle Cloudflare records to **"DNS only" (Grey Cloud / Proxied: Off)**.
+- **⏳ Negative DNS Caching (SOA Minimum TTL Delay)**: If you trigger domain verification before DNS propagates globally, recursive resolvers cache negative lookups (`NXDOMAIN`). Wait 5 to 60 minutes or check `dig TXT notifications.example.com` before triggering verification.
+- **🛡️ DMARC Subdomain Policy (`sp=`) Inheritance**: If your apex domain (`example.com`) has a DMARC record with `sp=reject`, subdomains automatically inherit that rejection policy. Ensure both SPF and DKIM pass on the subdomain before sending production traffic.
+- **📬 Hosted Mailboxes on Subdomains**: When provisioning hosted mailboxes, mailboxes are created under the specific verified domain (e.g. `support@notifications.example.com`). Inbound receiving requires the MX records for that exact subdomain to point to WazobiaMail.
+- **🔁 Network Timeouts & Idempotency**: Provide an `idempotencyKey` when dispatching critical transactional messages to prevent duplicate delivery on retry.
+
+#### Delivery Tracking, Stats, Read Receipts & Click Receipts
+
+WazobiaMail provides built-in, granular observability for every transactional email dispatched.
+
+- **Read Receipts (Open Tracking)**: An invisible 1x1 tracking pixel records when recipients open your email, capturing timestamp, IP geolocation, user-agent, and open counts.
+- **Click Receipts (Link Tracking)**: Links in HTML content are automatically rewritten to your tracking domain, logging each click event, recipient, destination URL, and click counts.
+- **Delivery Lifecycle**: Real-time status progression from `queued` ➔ `sent` ➔ `delivered` ➔ `opened` ➔ `clicked` ➔ `bounced`.
+
 ```php
+// Inspect single message timeline and receipt counters
+$timeline = WazobiaMail::tracking()->timeline('msg_abc123');
+
+echo "Status: " . $timeline['data']['status'] . "\n";
+echo "Read Receipts (Opens): " . $timeline['data']['openCount'] . "\n";
+echo "Click Receipts (Clicks): " . $timeline['data']['clickCount'] . "\n";
+
 // Query delivery events
 $events = WazobiaMail::tracking()->events([
     'event_type' => 'delivered',
     'recipient' => 'client@example.com',
 ]);
-
-// Get delivery timeline for a message
-$timeline = WazobiaMail::tracking()->timeline('msg_abc123');
 ```
 
 #### Webhook Handling & Verification
