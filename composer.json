@@ -33,7 +33,7 @@
             "options": {
                 "symlink": true,
                 "versions": {
-                    "wazobiamail/wazobiamail-php": "0.1.0"
+                    "wazobiamail/wazobiamail-php": "0.1.1"
                 }
             }
         }
