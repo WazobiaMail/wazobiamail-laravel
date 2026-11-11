@@ -1,6 +1,6 @@
 {
     "name": "wazobiamail/wazobiamail-laravel",
-    "description": "Send Laravel mail through the WazobiaMail API. WazobiaMail is a Resend alternative that also supports SMTP, with domains, hosted mailboxes, and deliverability tooling.",
+    "description": "Send Laravel mail through the WazobiaMail API. Start free with 3,000 emails/month. A Resend alternative that also supports SMTP, with domains, hosted mailboxes, and deliverability tooling.",
     "type": "library",
     "license": "MIT",
     "authors": [
@@ -33,7 +33,7 @@
             "options": {
                 "symlink": true,
                 "versions": {
-                    "wazobiamail/wazobiamail-php": "0.1.1"
+                    "wazobiamail/wazobiamail-php": "0.1.2"
                 }
             }
         }
