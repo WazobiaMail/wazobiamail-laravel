@@ -1,6 +1,6 @@
 {
     "name": "wazobiamail/wazobiamail-laravel",
-    "description": "Official Laravel package for WazobiaMail with ServiceProvider, Facade, and custom Mail driver.",
+    "description": "Send Laravel mail through the WazobiaMail API. WazobiaMail is a Resend alternative that also supports SMTP, with domains, hosted mailboxes, and deliverability tooling.",
     "type": "library",
     "license": "MIT",
     "authors": [
@@ -22,7 +22,9 @@
         "mailer",
         "smtp",
         "inbox",
-        "mailboxes"
+        "mailboxes",
+        "resend-alternative",
+        "email-api"
     ],
     "repositories": [
         {
