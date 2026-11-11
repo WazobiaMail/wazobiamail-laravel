@@ -27,10 +27,18 @@ class WazobiaMailTransport extends AbstractTransport
 
         $result = $this->client->messages()->send($payload);
 
-        if (!empty($result['id'])) {
+        // The API returns {"result": {"trackingId": ...}}; older deployments used a
+        // flat {"id": ...} shape, so accept both without breaking existing callers.
+        $messageId = $result['result']['trackingId']
+            ?? $result['result']['id']
+            ?? $result['trackingId']
+            ?? $result['id']
+            ?? null;
+
+        if ($messageId !== null && $messageId !== '') {
             $original = $message->getOriginalMessage();
             if ($original instanceof \Symfony\Component\Mime\Message) {
-                $original->getHeaders()->addTextHeader('X-Wazobia-Message-Id', (string) $result['id']);
+                $original->getHeaders()->addTextHeader('X-Wazobia-Message-Id', (string) $messageId);
             }
         }
     }

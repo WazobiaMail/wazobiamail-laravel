@@ -34,8 +34,10 @@ class TransportTest extends PHPUnitTestCase
                     && $payload['attachments'][0]['content'] === base64_encode('hello world');
             }))
             ->willReturn([
-                'id' => 'msg_xyz_123',
-                'status' => 'queued',
+                'result' => [
+                    'trackingId' => 'msg_xyz_123',
+                    'status' => 'queued',
+                ],
             ]);
 
         $clientMock = $this->createMock(WazobiaMailClient::class);

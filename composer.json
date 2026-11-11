@@ -1,6 +1,5 @@
 {
     "name": "wazobiamail/wazobiamail-laravel",
-    "version": "0.1.0",
     "description": "Official Laravel package for WazobiaMail with ServiceProvider, Facade, and custom Mail driver.",
     "type": "library",
     "license": "MIT",
@@ -30,19 +29,22 @@
             "type": "path",
             "url": "../php",
             "options": {
-                "symlink": true
+                "symlink": true,
+                "versions": {
+                    "wazobiamail/wazobiamail-php": "0.1.0"
+                }
             }
         }
     ],
     "require": {
         "php": "^8.1 || ^8.2 || ^8.3 || ^8.4 || ^8.5",
-        "wazobiamail/wazobiamail-php": "*",
-        "illuminate/support": "^10.0 || ^11.0",
-        "illuminate/mail": "^10.0 || ^11.0",
+        "wazobiamail/wazobiamail-php": "^0.1.0",
+        "illuminate/support": "^10.0 || ^11.0 || ^12.0 || ^13.0",
+        "illuminate/mail": "^10.0 || ^11.0 || ^12.0 || ^13.0",
         "symfony/mailer": "^6.0 || ^7.0"
     },
     "require-dev": {
-        "orchestra/testbench": "^8.0 || ^9.0",
+        "orchestra/testbench": "^8.0 || ^9.0 || ^10.0 || ^11.0",
         "phpunit/phpunit": "^10.0 || ^11.0",
         "mockery/mockery": "^1.6"
     },

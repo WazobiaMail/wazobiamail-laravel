@@ -14,7 +14,7 @@ Official Laravel integration package for [WazobiaMail](https://wazobiamail.com).
 ## Requirements
 
 - **PHP**: `^8.1 || ^8.2 || ^8.3 || ^8.4 || ^8.5`
-- **Laravel Framework**: `^10.0 || ^11.0`
+- **Laravel Framework**: `^10.0 || ^11.0 || ^12.0 || ^13.0`
 
 ---
 
