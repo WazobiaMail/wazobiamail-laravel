@@ -118,10 +118,21 @@ class WazobiaMailTransport extends AbstractTransport
     {
         $formatted = [];
         foreach ($attachments as $attachment) {
+            $rawName = $attachment->getFilename() ?? 'attachment.dat';
+            $filename = trim((string) preg_replace('/[\r\n\0"\\\\\/]+/', '_', $rawName));
+            if ($filename === '') {
+                $filename = 'attachment.dat';
+            }
+
+            $contentType = trim((string) preg_replace('/[\r\n\0]+/', '', $attachment->getContentType()));
+            if ($contentType === '') {
+                $contentType = 'application/octet-stream';
+            }
+
             $formatted[] = [
-                'filename' => $attachment->getFilename() ?? 'attachment',
+                'filename' => $filename,
                 'content' => base64_encode($attachment->getBody()),
-                'contentType' => $attachment->getContentType(),
+                'contentType' => $contentType,
             ];
         }
 

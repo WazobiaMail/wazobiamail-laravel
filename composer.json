@@ -33,14 +33,14 @@
             "options": {
                 "symlink": true,
                 "versions": {
-                    "wazobiamail/wazobiamail-php": "0.1.2"
+                    "wazobiamail/wazobiamail-php": "0.1.3"
                 }
             }
         }
     ],
     "require": {
         "php": "^8.1 || ^8.2 || ^8.3 || ^8.4 || ^8.5",
-        "wazobiamail/wazobiamail-php": "^0.1.0",
+        "wazobiamail/wazobiamail-php": "^0.1.3",
         "illuminate/support": "^10.0 || ^11.0 || ^12.0 || ^13.0",
         "illuminate/mail": "^10.0 || ^11.0 || ^12.0 || ^13.0",
         "symfony/mailer": "^6.0 || ^7.0"
